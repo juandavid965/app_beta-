@@ -8,24 +8,91 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 
 const LoginScreen = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    console.log('Login pressed');
+  const handleLogin = async () => {
+
+    if (!email.trim() || !password.trim()) {
+
+      Alert.alert(
+        'Campos requeridos',
+        'Completa todos los campos',
+      );
+
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      const userData = await AsyncStorage.getItem('user');
+
+      if (!userData) {
+
+        Alert.alert(
+          'Usuario no encontrado',
+          'Primero debes registrarte',
+        );
+
+        setLoading(false);
+        return;
+      }
+
+      const parsedUser = JSON.parse(userData);
+
+      if (
+        parsedUser.email === email &&
+        parsedUser.password === password
+      ) {
+
+        await AsyncStorage.setItem(
+          'isLoggedIn',
+          'true',
+        );
+
+        router.replace('/HomeScreen');
+
+      } else {
+
+        Alert.alert(
+          'Error',
+          'Correo o contraseña incorrectos',
+        );
+      }
+
+    } catch (error) {
+
+      Alert.alert(
+        'Error',
+        'Ocurrió un problema al iniciar sesión',
+      );
+
+    } finally {
+
+      setLoading(false);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
 
-      {/* HEADER */}
+    <SafeAreaView style={styles.container}>
+
+      <StatusBar
+        barStyle="light-content"
+      />
+
       <View style={styles.header}>
 
         <Text style={styles.bankName}>
@@ -38,14 +105,12 @@ const LoginScreen = () => {
 
       </View>
 
-      {/* CARD */}
       <View style={styles.card}>
 
         <Text style={styles.title}>
           Welcome Back
         </Text>
 
-        {/* EMAIL */}
         <Text style={styles.label}>
           Email
         </Text>
@@ -60,7 +125,6 @@ const LoginScreen = () => {
           onChangeText={setEmail}
         />
 
-        {/* PASSWORD */}
         <Text style={styles.label}>
           Password
         </Text>
@@ -74,26 +138,39 @@ const LoginScreen = () => {
           onChangeText={setPassword}
         />
 
-        {/* LOGIN BUTTON */}
         <TouchableOpacity
           style={styles.loginButton}
           onPress={handleLogin}
         >
-          <Text style={styles.loginButtonText}>
-            Login
-          </Text>
+
+          {loading ? (
+
+            <ActivityIndicator color="#FFFFFF" />
+
+          ) : (
+
+            <Text style={styles.loginButtonText}>
+              Login
+            </Text>
+
+          )}
+
         </TouchableOpacity>
 
-        {/* REGISTER */}
         <TouchableOpacity
-          onPress={() => router.push('/HomeScreen')}
+          onPress={() =>
+            router.push('/RegisterScreen')
+          }
         >
+
           <Text style={styles.registerText}>
             I don't have an account
           </Text>
+
         </TouchableOpacity>
 
       </View>
+
     </SafeAreaView>
   );
 };
@@ -115,9 +192,8 @@ const styles = StyleSheet.create({
 
   bankName: {
     color: '#FFFFFF',
-    fontSize: 38,
+    fontSize: 40,
     fontWeight: 'bold',
-    letterSpacing: 1,
   },
 
   subtitle: {
@@ -135,7 +211,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '700',
     color: '#0F172A',
     marginBottom: 35,
@@ -161,21 +237,11 @@ const styles = StyleSheet.create({
   },
 
   loginButton: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#2563EB',
     paddingVertical: 18,
     borderRadius: 14,
     alignItems: 'center',
     marginTop: 10,
-
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 5,
   },
 
   loginButtonText: {
